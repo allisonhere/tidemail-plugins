@@ -1,0 +1,11 @@
+id = "smart"
+name = "TideMail Smart"
+version = "0.1.0"
+api = 1
+command = "tidemail-plugin-smart"
+
+[permissions]
+message_metadata = true
+message_body = false
+network = false
+annotations = true
