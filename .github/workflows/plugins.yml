@@ -1,0 +1,26 @@
+name: Validate plugins
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: plugins/smart/go.mod
+      - name: Build TideMail developer CLI
+        run: |
+          git clone --depth=1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" /tmp/tidemail-source
+          # Replace this with the pinned TideMail release binary once published.
+          echo "Set TIDEMAIL_BIN to a TideMail binary in repository CI."
+      - name: Check plugin manifests and sources
+        run: |
+          for manifest in plugins/*/plugin.toml; do
+            test -f "$manifest"
+            plugin_dir="${manifest%/plugin.toml}"
+            (cd "$plugin_dir" && go build -buildvcs=false ./...)
+          done

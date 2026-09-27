@@ -1,0 +1,9 @@
+# Local plugin binaries
+plugins/*/tidemail-plugin-*
+plugins/*/smart
+plugins/*/*.test
+
+# Go build and editor state
+.cache/
+coverage.out
+.DS_Store
