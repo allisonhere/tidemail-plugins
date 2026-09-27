@@ -1,7 +1,15 @@
 # tidemail-plugin-analytics
 
-**TideMail Analytics** is a report plugin: a plain-text mail dashboard drawn
-from TideMail's own cache.
+**TideMail Analytics** is a report plugin: a mail dashboard drawn from
+TideMail's own cache, **in color**. It returns a TideMail structured view
+(stat tiles, sparklines, a weekly heatmap, bar charts, a table), and TideMail
+draws it in your theme: category bars in your category tag colors, busy days
+warming toward the highlight color, attention tiles in your *important* color.
+The plugin never chooses a color itself; recolor your theme or tags and the
+dashboard follows.
+
+On a TideMail build without structured views it falls back to the plain-text
+dashboard below.
 
 ```text
 ╭────────────────────────────────────────────────────────╮
@@ -80,7 +88,7 @@ tidemail plugin test .      # runs a full report against a synthetic mailbox
 TideMail runs a report in rounds. With conversations on, the plugin first
 pages through `query.threads` (at most 5 pages of 500 conversations in the
 range), keeping the five busiest, then asks for every `analytics.*`
-statistic in one round, then renders the dashboard. That is at most 7 of
-TideMail's 8 rounds. The dashboard is plain text: TideMail strips escape
-sequences and chooses colors, so the design uses box drawing, block
-elements, and sparklines, and keeps every line within 58 columns.
+statistic in one round, then answers with a structured view (or, when
+TideMail's `context.views` is absent, the text dashboard). That is at most 7
+of TideMail's 8 rounds. Colors are TideMail's: the view only says which bars
+are categories and which numbers need attention.

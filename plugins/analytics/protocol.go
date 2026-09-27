@@ -43,6 +43,9 @@ type errorBody struct {
 type reportContext struct {
 	Now      string `json:"now"`
 	Timezone string `json:"timezone"`
+	// Views is the structured-view version TideMail draws; 0 on TideMail
+	// builds without views, which get the text dashboard instead.
+	Views int `json:"views,omitempty"`
 }
 
 // reportRequest is report.run's data.
@@ -61,6 +64,7 @@ type reportStep struct {
 	Queries map[string]query `json:"queries,omitempty"`
 	State   *state           `json:"state,omitempty"`
 	Report  string           `json:"report,omitempty"`
+	View    *view            `json:"view,omitempty"`
 }
 
 func readRequest(r io.Reader) (request, error) {

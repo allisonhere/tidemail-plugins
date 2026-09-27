@@ -106,6 +106,9 @@ func step(rr reportRequest, settings map[string]any) (reportStep, error) {
 		if err := s.decode(rr.Results); err != nil {
 			return reportStep{}, err
 		}
+		if rr.Context.Views >= 1 {
+			return reportStep{View: buildView(st, s, rr.Context)}, nil
+		}
 		return reportStep{Report: render(st, s, rr.Context)}, nil
 	}
 	return reportStep{}, fmt.Errorf("unknown report phase %q", st.Phase)

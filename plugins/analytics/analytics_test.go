@@ -211,3 +211,98 @@ func TestChartHelpers(t *testing.T) {
 		t.Fatalf("joinWrapped = %q", got)
 	}
 }
+
+func statsFixture(t *testing.T) stats {
+	t.Helper()
+	var results map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(statsResults), &results); err != nil {
+		t.Fatal(err)
+	}
+	var s stats
+	if err := s.decode(results); err != nil {
+		t.Fatal(err)
+	}
+	return s
+}
+
+func TestViewOnlyWhenTideMailDrawsViews(t *testing.T) {
+	var results map[string]json.RawMessage
+	_ = json.Unmarshal([]byte(statsResults), &results)
+	st := state{Range: "30d", Phase: phaseStats}
+	old := mustStep(t, reportRequest{Round: 2, Context: ctx, State: stateJSON(t, &st), Results: results}, nil)
+	if old.View != nil || old.Report == "" {
+		t.Fatal("TideMail without views gets the text dashboard")
+	}
+	withViews := ctx
+	withViews.Views = 1
+	s := mustStep(t, reportRequest{Round: 2, Context: withViews, State: stateJSON(t, &st), Results: results}, nil)
+	if s.View == nil || s.Report != "" {
+		t.Fatal("TideMail with views gets a view")
+	}
+}
+
+func TestViewBlocksStayWithinTideMailLimits(t *testing.T) {
+	st := state{Range: "7d", Conversations: true, Scanned: 812,
+		Top: []thread{{Subject: strings.Repeat("long subject ", 20), Messages: 9, People: 3, NeedsYou: true}, {Messages: 4, Waiting: true}}}
+	v := buildView(st, statsFixture(t), ctx)
+	raw, _ := json.Marshal(v)
+	if bytes.Contains(raw, []byte("color")) || bytes.Contains(raw, []byte("\\u001b")) {
+		t.Fatal("views carry semantics only")
+	}
+	types := map[string]bool{}
+	checkText := func(s string, max int) {
+		if utf8.RuneCountInString(s) > max {
+			t.Fatalf("%q longer than %d", s, max)
+		}
+	}
+	checkText(v.Title, 80)
+	checkText(v.Subtitle, 80)
+	if len(v.Blocks) > 32 {
+		t.Fatalf("%d blocks", len(v.Blocks))
+	}
+	for _, b := range v.Blocks {
+		types[b.Type] = true
+		checkText(b.Title, 80)
+		checkText(b.Note, 80)
+		for _, it := range b.Items {
+			checkText(it.Label, 40)
+			checkText(it.Value, 24)
+			checkText(it.Note, 40)
+		}
+		for _, r := range b.Rows {
+			if len(r.Values) > 60 {
+				t.Fatal("heatmap row too wide")
+			}
+		}
+		if len(b.Rows) > 12 || len(b.Items) > 24 || len(b.Cells) > 50 {
+			t.Fatalf("block %s over limits", b.Type)
+		}
+		for _, row := range b.Cells {
+			if len(row) != len(b.Columns) {
+				t.Fatal("table row width")
+			}
+			for _, c := range row {
+				checkText(c, 120)
+			}
+		}
+	}
+	for _, want := range []string{"stats", "sparkline", "heatmap", "bars", "table"} {
+		if !types[want] {
+			t.Errorf("view has no %s block", want)
+		}
+	}
+	if v.Blocks[0].Items[2].Tone != "attention" {
+		t.Fatal("Needs You with mail waiting is flagged for attention")
+	}
+	if b := v.Blocks[3]; b.Kind != "category" || b.Items[0].Label != "newsletter" || b.Items[0].Note != "49%" {
+		t.Fatalf("category bars = %+v", b)
+	}
+}
+
+func TestRhythmStartsWeeksOnMonday(t *testing.T) {
+	// The fixture's buckets are Monday Sep 21 to Sunday Sep 27: one week.
+	b, ok := rhythm(statsFixture(t))
+	if !ok || len(b.Rows) != 1 || b.Rows[0].Label != "Sep 21" || b.Rows[0].Values[1] != 30 || b.Rows[0].Values[6] != 1 {
+		t.Fatalf("rhythm = %+v", b)
+	}
+}
