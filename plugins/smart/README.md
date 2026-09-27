@@ -27,11 +27,12 @@ Requires Go 1.26 and a TideMail build with plugin support (currently the
 `experiment/plugin-system` branch).
 
 ```sh
-go build -o tidemail-plugin-smart .
+go build -buildvcs=false -o tidemail-plugin-smart .
+tidemail plugin validate .
+tidemail plugin test .
 
 mkdir -p ~/.config/tidemail/plugins/smart
-cp tidemail-plugin-smart ~/.config/tidemail/plugins/smart/
-cp plugin.toml.example ~/.config/tidemail/plugins/smart/plugin.toml
+cp tidemail-plugin-smart plugin.toml ~/.config/tidemail/plugins/smart/
 ```
 
 Restart TideMail (plugins are discovered at startup).
