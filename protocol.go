@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,6 +20,8 @@ const (
 
 	methodPing            = "ping"
 	methodMessageMetadata = "message.metadata"
+	methodMessageReceived = "message.received" // automatic; same payload and answer
+	methodTest            = "plugin.test"
 
 	// maxRequestBytes bounds how much stdin is read. TideMail's requests are a
 	// few kilobytes.
@@ -34,11 +37,14 @@ const (
 )
 
 type request struct {
-	API       int             `json:"api"`
-	Type      string          `json:"type"`
-	RequestID string          `json:"request_id"`
-	Method    string          `json:"method"`
-	Data      json.RawMessage `json:"data,omitempty"`
+	API       int    `json:"api"`
+	Type      string `json:"type"`
+	RequestID string `json:"request_id"`
+	Method    string `json:"method"`
+	// Settings are this plugin's resolved settings from TideMail. Secrets are
+	// not in here; TideMail passes them in the environment.
+	Settings map[string]any  `json:"settings,omitempty"`
+	Data     json.RawMessage `json:"data,omitempty"`
 }
 
 type response struct {
@@ -108,8 +114,9 @@ func readRequest(r io.Reader) (request, error) {
 }
 
 // handle answers one parsed request. It always returns a response carrying the
-// request's ID.
-func handle(req request) response {
+// request's ID. A TypeSafe problem is never an error response: classification
+// falls back to the local rules.
+func (s smart) handle(ctx context.Context, req request) response {
 	switch {
 	case req.API != apiVersion:
 		return errorResponse(req, codeUnsupportedAPI, fmt.Sprintf("api %d is not supported (want %d)", req.API, apiVersion))
@@ -119,12 +126,15 @@ func handle(req request) response {
 	switch req.Method {
 	case methodPing:
 		return okResponse(req, pingResult{Message: "pong"})
-	case methodMessageMetadata:
+	case methodMessageMetadata, methodMessageReceived:
 		meta, err := decodeMetadata(req.Data)
 		if err != nil {
 			return errorResponse(req, codeBadMetadata, err.Error())
 		}
-		return okResponse(req, metadataResult{Annotations: Classify(meta)})
+		opts := parseOptions(req.Settings, s.apiKey)
+		return okResponse(req, metadataResult{Annotations: s.classify(ctx, meta, opts)})
+	case methodTest:
+		return okResponse(req, s.testConnection(ctx, parseOptions(req.Settings, s.apiKey)))
 	default:
 		return errorResponse(req, codeUnsupportedMethod, fmt.Sprintf("method %q is not supported", req.Method))
 	}

@@ -26,25 +26,46 @@ const (
 
 // Confidence values are heuristic rule strength, not calibrated probabilities.
 
-// Classify turns message metadata into annotations using fixed, local rules.
-// It only emits positive signals (needs_reply=true, urgency=high,
+// Classify turns message metadata into annotations using the local rules
+// only. It only emits positive signals (needs_reply=true, urgency=high,
 // importance=high, one category); a key that does not apply is left out, and
 // TideMail's replace-on-success storage clears it. The result is never nil.
 func Classify(meta MessageMetadata) []Annotation {
-	msg := analyze(meta)
+	return localDecisions(analyze(meta)).annotations()
+}
+
+// decisions are the four judgments before they become annotations. A zero
+// confidence means "does not apply".
+type decisions struct {
+	needsReply   float64
+	urgency      float64
+	importance   float64
+	category     string
+	categoryConf float64
+}
+
+// localDecisions applies the deterministic rules.
+func localDecisions(msg message) decisions {
+	d := decisions{needsReply: needsReply(msg), urgency: urgency(msg)}
+	d.category, d.categoryConf = categorize(msg)
+	d.importance = importance(msg, d.category)
+	return d
+}
+
+// annotations renders decisions in TideMail's badge order.
+func (d decisions) annotations() []Annotation {
 	out := []Annotation{}
-	if c := needsReply(msg); c > 0 {
-		out = append(out, annotation(keyNeedsReply, "true", c))
+	if d.needsReply > 0 {
+		out = append(out, annotation(keyNeedsReply, "true", d.needsReply))
 	}
-	if c := urgency(msg); c > 0 {
-		out = append(out, annotation(keyUrgency, "high", c))
+	if d.urgency > 0 {
+		out = append(out, annotation(keyUrgency, "high", d.urgency))
 	}
-	category, categoryConf := categorize(msg)
-	if c := importance(msg, category); c > 0 {
-		out = append(out, annotation(keyImportance, "high", c))
+	if d.importance > 0 {
+		out = append(out, annotation(keyImportance, "high", d.importance))
 	}
-	if category != "" {
-		out = append(out, annotation(keyCategory, category, categoryConf))
+	if d.category != "" {
+		out = append(out, annotation(keyCategory, d.category, d.categoryConf))
 	}
 	return out
 }
@@ -277,6 +298,27 @@ func categorize(msg message) (string, float64) {
 	return "", 0
 }
 
+// strongLocalCategory reports a category the local rules settle with near
+// certainty: a known sender domain (GitHub, a shipping carrier, a social
+// network) or an explicit security notice. Hybrid mode keeps these instead of
+// asking Jev.
+func strongLocalCategory(msg message) (string, float64, bool) {
+	switch {
+	case matchSecurity(msg) > 0:
+		return "security", matchSecurity(msg), true
+	case domainIs(msg.domain, "github.com"):
+		return "github", 0.98, true
+	case domainIs(msg.domain, "ups.com", "fedex.com", "usps.com", "dhl.com"):
+		return "shipping", 0.9, true
+	case domainIs(msg.domain, socialDomains...):
+		return "social", 0.85, true
+	}
+	return "", 0, false
+}
+
+var socialDomains = []string{"facebookmail.com", "linkedin.com", "twitter.com", "x.com",
+	"instagram.com", "redditmail.com", "reddit.com", "mastodon.social", "bsky.app", "threads.net"}
+
 func matchSecurity(msg message) float64 {
 	if hasAnyPhrase(msg.tokens,
 		"security alert", "security notice", "new login", "new sign in", "new signin",
@@ -381,8 +423,7 @@ func matchNewsletter(msg message) float64 {
 }
 
 func matchSocial(msg message) float64 {
-	if domainIs(msg.domain, "facebookmail.com", "linkedin.com", "twitter.com", "x.com",
-		"instagram.com", "redditmail.com", "reddit.com", "mastodon.social", "bsky.app", "threads.net") {
+	if domainIs(msg.domain, socialDomains...) {
 		return 0.85
 	}
 	if hasAnyPhrase(msg.tokens, "mentioned you", "tagged you", "new follower", "followed you",
