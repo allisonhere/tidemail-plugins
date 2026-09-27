@@ -38,7 +38,7 @@ Restart TideMail (plugins are discovered at startup).
 
 ### Settings
 
-Open **Settings → Advanced → Plugin settings**, select **TideMail Smart**, and
+Open **Settings → Advanced → Plugin settings**, select **TideMail Smart (JEV)**, and
 press `s` (or press `s` on it in **Plugins (experimental)** in the command
 palette):
 
@@ -64,7 +64,7 @@ them. Jev is priced per input token, so Smart keeps requests small.
 ### Running it
 
 - **By hand:** press `:`, type `plug`, choose **Run plugin on current
-  message**, and pick **TideMail Smart**.
+  message**, and pick **TideMail Smart (JEV)**.
 - **Automatically:** turn on **Auto-process new mail**. New unread mail is
   classified as it arrives (TideMail never sends old mail or first-sync
   history).

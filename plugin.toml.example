@@ -1,5 +1,5 @@
 id = "smart"
-name = "TideMail Smart"
+name = "TideMail Smart (JEV)"
 version = "0.2.0"
 api = 1
 command = "tidemail-plugin-smart"
