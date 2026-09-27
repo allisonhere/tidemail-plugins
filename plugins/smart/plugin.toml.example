@@ -1,0 +1,74 @@
+id = "smart"
+name = "TideMail Smart (JEV)"
+version = "0.2.0"
+api = 1
+command = "tidemail-plugin-smart"
+events = ["message.received"]
+capabilities = ["plugin.test"]
+
+[permissions]
+message_metadata = true
+message_body = false
+# Needed only for hybrid and jev modes, which call api.typesafe.ai.
+network = true
+annotations = true
+
+[[settings]]
+key = "mode"
+label = "Classification mode"
+type = "select"
+default = "hybrid"
+options = ["local", "hybrid", "jev"]
+help = "local: rules only, no network. hybrid: rules for certain cases, Jev for the rest. jev: Jev for everything, rules as fallback."
+
+[[settings]]
+key = "jev_enabled"
+label = "TypeSafe / Jev"
+type = "bool"
+default = true
+help = "Sends only the sender, subject, and a few yes/no flags to api.typesafe.ai. Never the body, recipients, or attachments."
+
+[[settings]]
+key = "jev_api_key"
+label = "TypeSafe API key"
+type = "secret"
+help = "Stored in your system keychain. Without it, Smart uses its local rules."
+
+[[settings]]
+key = "jev_model"
+label = "Jev model"
+type = "select"
+default = "jev-latest"
+options = ["jev-latest", "jev-1.13.0"]
+help = "jev-latest follows new releases; jev-1.13.0 pins a version."
+
+[[settings]]
+key = "local_rules_first"
+label = "Local rules first"
+type = "bool"
+default = true
+help = "In hybrid mode, keep certain local categories (GitHub, carriers, social networks, security) without asking Jev."
+
+[[settings]]
+key = "jev_needs_reply"
+label = "Jev: Needs reply"
+type = "bool"
+default = true
+
+[[settings]]
+key = "jev_urgency"
+label = "Jev: Urgency"
+type = "bool"
+default = true
+
+[[settings]]
+key = "jev_importance"
+label = "Jev: Importance"
+type = "bool"
+default = true
+
+[[settings]]
+key = "jev_category"
+label = "Jev: Category"
+type = "bool"
+default = true
