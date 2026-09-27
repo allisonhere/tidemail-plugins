@@ -10,22 +10,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+      # actions/checkout only writes inside the workspace.
       - name: Checkout TideMail developer CLI
         uses: actions/checkout@v4
         with:
           repository: allisonhere/tidemail
           ref: experiment/plugin-system
-          path: /tmp/tidemail
+          path: .tidemail-src
       - name: Build TideMail developer CLI
         run: |
-          cd /tmp/tidemail
+          cd .tidemail-src
           CGO_ENABLED=0 go build -o /tmp/tidemail-bin .
       - name: Build and test plugins
         run: |
           for manifest in plugins/*/plugin.toml; do
             plugin_dir="${manifest%/plugin.toml}"
             plugin_id="$(basename "$plugin_dir")"
-            (cd "$plugin_dir" && go build -buildvcs=false -o "tidemail-plugin-$plugin_id" .)
+            (cd "$plugin_dir" && go test ./... && go build -buildvcs=false -o "tidemail-plugin-$plugin_id" .)
             /tmp/tidemail-bin plugin validate "$plugin_dir"
             /tmp/tidemail-bin plugin test "$plugin_dir"
           done

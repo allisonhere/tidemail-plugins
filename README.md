@@ -37,6 +37,8 @@ execute plugins.
 ## Included plugins
 
 - [TideMail Smart (JEV)](plugins/smart/README.md)
+- [TideMail Analytics](plugins/analytics/README.md): a read-only mail dashboard
+  (report plugin)
 
 Only install plugins you trust. Review each manifest's permissions and the
 plugin's privacy documentation before installation.

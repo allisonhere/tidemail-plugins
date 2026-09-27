@@ -1,0 +1,28 @@
+id = "analytics"
+name = "TideMail Analytics"
+version = "0.1.0"
+api = 1
+command = "./tidemail-plugin-analytics"
+capabilities = ["report.run"]
+
+# Read-only. Counts and statistics, plus a list of your busiest conversations
+# (turn that off in the settings to use counts only). No message bodies, no
+# network, no annotations, no changes to mail.
+[permissions]
+analytics_read = true
+threads_query = true
+
+[[settings]]
+key = "range"
+label = "Time range"
+type = "select"
+default = "30d"
+options = ["7d", "30d", "90d", "365d"]
+help = "The period the report covers, ending when you run it."
+
+[[settings]]
+key = "conversations"
+label = "Busiest conversations"
+type = "bool"
+default = true
+help = "Lists your busiest conversations by subject and participant count. Off: the report uses only counts."
