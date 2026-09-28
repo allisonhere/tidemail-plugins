@@ -1,0 +1,13 @@
+id = "unsubscribe-plus"
+name = "Unsubscribe+"
+description = "Detect newsletters, automated senders, and unsubscribe options"
+version = "0.1.0"
+api = 1
+command = "./tidemail-plugin-unsubscribe-plus"
+events = ["message.received"]
+
+# Least privilege: header metadata in, annotations out. No network, no
+# message bodies, no queries. Classification is local and deterministic.
+[permissions]
+message_metadata = true
+annotations = true

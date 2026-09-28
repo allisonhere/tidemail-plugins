@@ -1,5 +1,6 @@
 id = "smart"
 name = "TideMail Smart (JEV)"
+description = "Tag mail that needs a reply, is urgent or important, and its category"
 version = "0.2.0"
 api = 1
 command = "./tidemail-plugin-smart"

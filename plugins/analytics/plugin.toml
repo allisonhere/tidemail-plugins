@@ -1,5 +1,6 @@
 id = "analytics"
 name = "TideMail Analytics"
+description = "A colorful read-only dashboard of your mail"
 version = "0.1.0"
 api = 1
 command = "./tidemail-plugin-analytics"

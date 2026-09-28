@@ -39,6 +39,8 @@ execute plugins.
 - [TideMail Smart (JEV)](plugins/smart/README.md)
 - [TideMail Analytics](plugins/analytics/README.md): a read-only mail dashboard
   (report plugin)
+- [Unsubscribe+](plugins/unsubscribe-plus/README.md): recognizes newsletters,
+  automated senders, and sender value; local, offline, never unsubscribes
 
 Only install plugins you trust. Review each manifest's permissions and the
 plugin's privacy documentation before installation.
