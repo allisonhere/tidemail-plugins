@@ -1,0 +1,60 @@
+name: Release
+
+# Push a tag such as v0.1.0 to publish every plugin for Linux and macOS
+# (amd64, arm64) plus the catalog.json TideMail reads for Settings -> Plugins.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+      - name: Install gpg for the PGP plugin tests
+        run: sudo apt-get update && sudo apt-get install -y gnupg
+      - name: Checkout TideMail developer CLI
+        uses: actions/checkout@v4
+        with:
+          repository: allisonhere/tidemail
+          ref: main
+          path: .tidemail-src
+      - name: Build TideMail developer CLI
+        run: |
+          cd .tidemail-src
+          CGO_ENABLED=0 go build -o /tmp/tidemail-bin .
+      - name: Test and validate every plugin
+        run: |
+          for manifest in plugins/*/plugin.toml; do
+            plugin_dir="${manifest%/plugin.toml}"
+            (cd "$plugin_dir" && go test ./...)
+            (cd "$plugin_dir" && go build -buildvcs=false -o "$(basename "$(sed -n 's/^command *= *"\(.*\)"/\1/p' plugin.toml)")" .)
+            /tmp/tidemail-bin plugin validate "$plugin_dir"
+            /tmp/tidemail-bin plugin test "$plugin_dir"
+          done
+      - name: Package every plugin for every platform
+        run: |
+          for manifest in plugins/*/plugin.toml; do
+            id="$(basename "${manifest%/plugin.toml}")"
+            for goos in linux darwin; do
+              for goarch in amd64 arm64; do
+                scripts/package.sh "$id" "$goos" "$goarch" dist
+              done
+            done
+          done
+      - name: Write catalog.json and SHA256SUMS
+        run: |
+          cd scripts/catalog
+          go run . -dist ../../dist -plugins ../../plugins -repo "$GITHUB_REPOSITORY" -tag "$GITHUB_REF_NAME"
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" \
+            --notes "Plugins for TideMail. Install them from Settings -> Plugins -> b inside TideMail."

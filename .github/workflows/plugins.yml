@@ -12,12 +12,14 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26.x"
+      - name: Install gpg for the PGP plugin tests
+        run: sudo apt-get update && sudo apt-get install -y gnupg
       # actions/checkout only writes inside the workspace.
       - name: Checkout TideMail developer CLI
         uses: actions/checkout@v4
         with:
           repository: allisonhere/tidemail
-          ref: experiment/plugin-system
+          ref: main
           path: .tidemail-src
       - name: Build TideMail developer CLI
         run: |
@@ -32,3 +34,9 @@ jobs:
             /tmp/tidemail-bin plugin validate "$plugin_dir"
             /tmp/tidemail-bin plugin test "$plugin_dir"
           done
+      - name: End-to-end PGP test in TideMail
+        run: |
+          cd .tidemail-src
+          TIDEMAIL_PLUGINS_DIR="$GITHUB_WORKSPACE" go test -count=1 -run EndToEnd ./internal/pgpmail
+      - name: Catalog generator builds
+        run: cd scripts/catalog && go vet ./...
