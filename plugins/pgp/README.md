@@ -24,7 +24,7 @@ cp tidemail-plugin-pgp plugin.toml ~/.config/tidemail/plugins/pgp/
 ```
 
 Restart TideMail after a manual install. In a message, press `D` to decrypt and verify; in compose,
-`F8` signs and `F9` encrypts. The user guide has the details and limits:
+`Alt+S` signs and `Alt+E` encrypts. The user guide has the details and limits:
 [PGP encryption and signing](https://github.com/allisonhere/tidemail/blob/main/docs/guide.md#pgp-encryption-and-signing).
 
 ## Settings
