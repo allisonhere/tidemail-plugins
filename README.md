@@ -59,6 +59,8 @@ TideMail's
   (report plugin)
 - [Unsubscribe+](plugins/unsubscribe-plus/README.md): recognizes newsletters,
   automated senders, and sender value; local, offline, never unsubscribes
+- [Spam & Phishing Guard](plugins/spam-guard/README.md): warns about phishing,
+  spoofed senders, and scam mail; local, offline, never moves or deletes anything
 - [PGP (GnuPG)](plugins/pgp/README.md): decrypt and verify received mail, sign
   and encrypt what you send, using your own GnuPG keyring
 

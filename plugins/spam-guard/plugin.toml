@@ -1,0 +1,22 @@
+id = "spam-guard"
+name = "Spam & Phishing Guard"
+description = "Warn about phishing, spoofed senders, and scam mail"
+version = "0.1.0"
+api = 1
+command = "./tidemail-plugin-spam-guard"
+events = ["message.received"]
+
+# Least privilege: header metadata in, annotations out. No network, no message
+# bodies, no queries. Everything is decided locally and deterministically, and
+# the plugin never moves, deletes, or opens anything.
+[permissions]
+message_metadata = true
+annotations = true
+
+[[settings]]
+key = "sensitivity"
+label = "Sensitivity"
+type = "select"
+options = ["low", "normal", "high"]
+default = "normal"
+help = "How much evidence is needed before a message is flagged. High catches more but may flag some genuine mail."
